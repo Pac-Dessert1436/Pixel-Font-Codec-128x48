@@ -1,7 +1,6 @@
 ﻿Imports System.Drawing.Imaging
 Imports System.IO
 Imports System.Text
-Imports System.Text.RegularExpressions
 
 #Disable Warning IDE1006
 Public Class frmMain
@@ -117,9 +116,7 @@ Public Class frmMain
     ' ToDo: Write a drag event so that the font sheet can be loaded immediately
     Private Sub frmMain_DragEnter(sender As Object, e As DragEventArgs) Handles MyBase.DragEnter
         e.Effect = If(
-            e.Data.GetDataPresent(DataFormats.FileDrop),
-            DragDropEffects.Copy,
-            DragDropEffects.None
+            e.Data.GetDataPresent(DataFormats.FileDrop), DragDropEffects.Copy, DragDropEffects.None
         )
     End Sub
 
@@ -134,12 +131,15 @@ Public Class frmMain
     End Sub
 
     Private Sub btnExportSheet_Click(sender As Object, e As EventArgs) Handles btnExportSheet.Click
-        If Not Regex.Match(txtFilePath.Text, "[C-E]:\\.*\\\.png").Success Then
-            ShowMessagePopup("For PNG output, please select or enter a save path first.
+        With txtFilePath.Text
+            Dim validDrive = .StartsWith("C:\") OrElse .StartsWith("D:\") OrElse .StartsWith("E:\")
+            If Not validDrive AndAlso Not .EndsWith(".png") Then
+                ShowMessagePopup("For PNG output, please select or enter a save path first.
 
 Note: Enter the PNG full path starting with 'C:\', 'D:\' or 'E:\' if you are going to enter the path manually.")
-            Exit Sub
-        End If
+                Exit Sub
+            End If
+        End With
         If String.IsNullOrWhiteSpace(txtFontData.Text) Then
             ShowMessagePopup("Please enter valid font encoding data first")
             Exit Sub
@@ -170,7 +170,15 @@ Note: Enter the PNG full path starting with 'C:\', 'D:\' or 'E:\' if you are goi
             Exit Sub
         End If
 
+        Dim varName = InputBox("Enter variable name for font encoding data:
+(Note: Leave it *blank* for anonymous StringBuilder)", "Variable Name")
+        Dim isAnonymous = String.IsNullOrWhiteSpace(varName)
+        If Not (isAnonymous OrElse varName Like "[a-zA-Z_][a-zA-Z0-9_]*") Then
+            ShowMessagePopup("Please enter a valid variable name")
+            Exit Sub
+        End If
         Try
+            Dim firstLine = If(isAnonymous, "With New StringBuilder", $"Dim {varName} As New StringBuilder")
             ' Read PNG file with `Using` to ensure disposal of Bitmap object
             Using bitmap As New Bitmap(txtFilePath.Text)
                 Dim data = EncodeFontData(bitmap)
@@ -178,14 +186,15 @@ Note: Enter the PNG full path starting with 'C:\', 'D:\' or 'E:\' if you are goi
                 Dim encodedText As New StringBuilder
 
                 strBdrCode.AppendLine("' Auto-generated font encoding data as VB.NET code")
-                strBdrCode.AppendLine("Dim data As New StringBuilder")
+                strBdrCode.AppendLine(firstLine)
                 ' Encode font data in chunks of 64 characters for readability
                 For i As Integer = 0 To data.Length - 1 Step 64
                     Dim chunkLength As Integer = Math.Min(64, data.Length - i)
                     Dim chunk As String = data.ToString(i, chunkLength)
                     encodedText.AppendLine(chunk)
-                    strBdrCode.AppendLine($"data.Append(""{chunk}"")")
+                    strBdrCode.AppendLine($"{varName}.Append(""{chunk}"")")
                 Next i
+                If isAnonymous Then strBdrCode.AppendLine($"End With")
 
                 txtFontData.Text = encodedText.ToString()
                 Clipboard.SetText(strBdrCode.ToString())

@@ -31,7 +31,7 @@ Most importantly, this codec also supports a __drag-and-drop operation__ when lo
 
 ## Prerequisites
 - [.NET SDK](https://dotnet.microsoft.com/en-us/download/dotnet): version 8.0 or later
-- IDE: Visual Studio 2022 or Visual Studio Code
+- IDE: Visual Studio 2022/2026 or Visual Studio Code
 
 ## Installation and Usage
 1. Clone the repository and navigate to the project directory:

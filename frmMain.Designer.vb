@@ -149,6 +149,8 @@ Partial Class frmMain
         AutoScaleDimensions = New SizeF(11.0F, 24.0F)
         AutoScaleMode = AutoScaleMode.Font
         ClientSize = New Size(900, 833)
+        FormBorderStyle = FormBorderStyle.FixedSingle
+        MaximizeBox = False
         Controls.Add(pnlPreviewContainer)
         Controls.Add(Label2)
         Controls.Add(Label1)
